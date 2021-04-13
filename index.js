@@ -17,7 +17,10 @@ function drawRect(x, y, width, height, color){
   context.fillRect(x, y, width, height);
 }
 
-function fib(n) {
-  if (n < 2) return n;
-  return fib(n-1) + fib(n-2);
+function drawCircle(x, y, radius){
+
+}
+
+class World{
+  
 }
