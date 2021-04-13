@@ -1,0 +1,13 @@
+body{
+  text-align: center;
+  background-image: url("./images/home.jpg");
+  background-size: cover;
+}
+
+#gameCanvas{
+  background-color: lightgreen;
+  border-color: brown;
+  border-width: thick;
+  border-style: solid;
+  border-radius: 100px;
+}
