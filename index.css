@@ -11,3 +11,8 @@ body{
   border-style: solid;
   border-radius: 100px;
 }
+
+h1{
+  font-size: 400%;
+  color: white;
+}
