@@ -4,17 +4,28 @@
 
     <!--This adds the css; which gives us styles-->
     <link rel="stylesheet" href="./index.css" type="text/css"/>
+
+    <!--The javascript source code-->
+    <script src="./index.js"></script>
   </head>
 
   <!-- The stuff in the window -->
   <body>
-    <h1 style="font-family:georgia,garamond,serif;">Patient Ø</h1>
-    <div id="gameContainer">
-      <canvas width="1280" height="720" id="gameCanvas"/>
-    </div>
+    <div id="menuContainer">
+      <!--<h1>Patient Ø</h1>-->
+      <h1 id="startHeading">MENU</h1>
+      
+      <button id="newGameButton" class="menuButton">New Simulation</button><br>
+      <button id="PlaceHolder" class="menuButton">Free V-Bucks</button>
 
-    <!--The javascript source code-->
-    <script src="./index.js"></script>
+      <div id="bottomBar">
+        <a href="https://github.com/Trentiumz/Hackathon">Github</a>
+      </div>
+    </div>
+    <div id="gameContainer" hidden>
+      <canvas width="1000" height="600" id="gameCanvas"/>
+      <!--<button id="newGameButton" class="menuButton">New Simulation</button>-->
+    </div>
   </body>
 
 </html>
