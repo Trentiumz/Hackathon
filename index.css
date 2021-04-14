@@ -45,8 +45,8 @@ h1 {
   font-size: 30px;
   transition-duration: 0.5s;
 
-  width: 400px;
-  height: 100px;
+  /*width: 400px;
+  height: 100px;*/
 
   margin: 1%;
 }
@@ -85,9 +85,14 @@ h1 {
 #bottomBar a {
   color: #f2f2f2;
   text-align: center;
-  padding: 14px 16px;
-  text-decoration: none;
-  font-size: 17px;
+  padding: 18px 18px;
+  font-size: 20px;
+
+  font-family: Trebuchet MS, sans-serif;
+
+  margin-top: 5%;
+  margin-bottom: 5%;
+  
 }
 
 
