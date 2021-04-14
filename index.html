@@ -16,17 +16,47 @@
       <h1 id="startHeading">MENU</h1>
       
       <button id="newGameButton" class="menuButton">New Simulation</button>
-      <button id="PlaceHolder" class="menuButton">Instructions</button> <br>
-      <button id="PlaceHolder" class="menuButton">COVID-19 Information</button>
-      <!--Leave that code for a new button for educational information and resources.-->
-
-      <div id="bottomBar">
-        <a href="https://github.com/Trentiumz/Hackathon">GitHub</a>
+      <button id="howto" class="menuButton">Instructions</button><br>
+      <div id="covinfo">
+        <a href="https://www.cdc.gov/coronavirus/2019-ncov/index.html">COVID-19 Information</a>
       </div>
     </div>
+    <div id="rules" hidden>  
+    <h1>
+     Instructions
+    </h1>  
+    <body>
+      Hello! Welcome to our COVID-19 Simulator, named Patient Ø.
+    </body>
+    </div>
+    <!-- <button id="PlaceHolder" class="menuButton">COVID-19 Information</button> -->
+
+    <!--Leave that code for a new button for educational information and resources.-->
+
+    <div id="bottomBar">
+      <a href="https://github.com/Trentiumz/Hackathon">GitHub</a>
+    </div>
     <div id="gameContainer" hidden>
-      <canvas width="1000" height="600" id="gameCanvas"/>
-      <button id="mainMenuButton">Main Menu</button>
+      <div id="stats">
+        <h2 id="statsTitle">Statistics</h2>
+        <h3 id="day" class="statistics">Day: 0</h3> 
+        <h3 id="characterCount" class="statistics">Character Count: 0</h3> 
+        <h3 id="healthyCount" class="statistics">Healthy: 0</h3>
+        <h3 id="infectedCount" class="statistics">Infected: 0  </h3>
+        <h3 id="deathCount" class="statistics">Deaths: 0 </h3>
+      </div>
+
+      <canvas width="1000" height="600" id="gameCanvas"></canvas>
+      <button id="mainMenuButton" class="menuButton">Main Menu</button>
+
+      <div id="controlPanel"> 
+        <h3>Mask-Wearing Percentage</h3>
+        <input type="range" min="1" max="100" value="50" id="maskSlider" class="slider">
+        <label id="maskPercentage">100%</label>
+      </div>
+
+
+      
     </div>
   </body>
 

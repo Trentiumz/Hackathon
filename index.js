@@ -24,8 +24,16 @@ window.onload = function(){
   document.getElementById("mainMenuButton").onclick = function() {
     document.getElementById("menuContainer").hidden = false;
     document.getElementById("gameContainer").hidden = true;
+    //TODO make a reset game function
   }
 
+  document.getElementById("howto").onclick = function(){
+    document.getElementById("menuContainer").hidden = true;
+    document.getElementById("gameContainer").hidden = true;
+    document.getElementById("rules").hidden = false;
+  }
+
+  initializeFiles()
 }
 
 var world;
@@ -36,11 +44,10 @@ const timeDelta = 300;
 // What to do when the game starts
 function start(){
   if(Object.keys(texts).length != Object.keys(textTags).length){
-    
+    setTimeout(start, 50)
+    return
   }
-  world = new World(100, 100);
-  var house = new House(3, 3, 2, 2, world, 5)
-  world.addHouse(house)
+  world = buildWorld(texts.w1Format, texts.w1Info)
 
   gameRunning = true;
   update()
@@ -74,11 +81,23 @@ class World{
       this.covered.push(new Array(this.height).fill(false));
     }
 
+    // Same as covered, but doesn't take into account people
+    this.map = JSON.parse(JSON.stringify(this.covered))
+
     this.characters = []
     this.houses = []
     this.shops = []
 
-    this.camera = new Camera(0, 0, 10)
+    this.camera = new Camera(0, 0, 30)
+  }
+  // Call this before adding any people
+  initializeBFS(){
+    for(let shop of this.shops){
+      shop.distancesFrom = shop.doBFS(JSON.parse(JSON.stringify(this.map)))
+    }
+    for(let house of this.houses){
+      house.distancesFrom = house.doBFS(JSON.parse(JSON.stringify(this.map)))
+    }
   }
   canMove(character, newX, newY){
     // Characters can only move up, down, left or right
@@ -109,19 +128,25 @@ class World{
         }
     }
     for(let house of this.houses){
-      let toSpawn = house.getSpawnLocations()
-      for(let coord of toSpawn){
-        let [x, y] = coord
-        if(this.isEmpty(x, y)){
-          this.addCharacter(new Character(x, y, this))
-        }
-      }
+      house.tick()
     }
     for(let shop of this.shops){
       shop.tick()
     }
+
+    //pass character count to html
+    var characterCountHTML = document.getElementById("characterCount").innerHTML;
+    console.log(characterCountHTML); 
+    //= ''.concat("Character Count: ", this.characters.length);
   }
   render(){
+    for(let x = 0; x < this.width; ++x){
+      for(let y = 0; y < this.height; ++y){
+        if(this.covered[x][y]){
+          this.camera.render(x, y, 1, 1, "lightgreen")
+        }
+      }
+    }
     for(let character of this.characters){
       character.render(this.camera);
     }
@@ -144,6 +169,7 @@ class World{
       for(let y = house.y; y < house.y + house.height; ++y){
         if(0 <= x && x < this.width && 0 <= y && y < this.height){
           this.covered[x][y] = true
+          this.map[x][y] = true
         }else{
           console.log("house reaches past the border")
         }
@@ -156,6 +182,7 @@ class World{
       for(let y = shop.y; y < shop.y + shop.height; ++y){
         if(0 <= x && x < this.width && 0 <= y && y < this.height){
           this.covered[x][y] = true
+          this.map[x][y] = true
         }else{
           console.log("shop reaches past the border")
         }
@@ -164,7 +191,7 @@ class World{
   }
   // Returns if something can spawn on this cell, or if it's empty(if it doesn't exist, it's the same as a border)
   isEmpty(x, y){
-    if(0 <= x < this.width && 0 <= y < this.height){
+    if(0 <= x && x < this.width && 0 <= y && y < this.height){
       return !this.covered[x][y]
     }
     return false
@@ -173,8 +200,19 @@ class World{
     this.characters.splice(this.characters.indexOf(character), 1)
     this.covered[character.x][character.y] = false
   }
-  setCovered(x, y, value){
+  setUnwalkable(x, y, value){
     this.covered[x][y] = value
+    this.map[x][y] = value
+  }
+  randomHouse(){
+    return this.houses[Math.floor(Math.random() * this.houses.length)]
+  }
+  randomShop(){
+    return this.shops[Math.floor(Math.random() * this.shops.length)]
+  }
+  intoBuilding(building, character){
+    building.enterBuilding(character)
+    this.deleteCharacter(character)
   }
 }
 
@@ -196,6 +234,9 @@ class Camera{
 const characterColor = "lightblue";
 const houseColor = "pink";
 
+// The possible adjacent moves
+const moves = [[-1, 0], [1, 0], [0, 1], [0, -1]]
+
 // Any object that exists in the world
 class Entity{
   constructor(x, y, width, height, world){
@@ -209,16 +250,27 @@ class Entity{
 
 // Each person
 class Character extends Entity{
-  constructor(x, y, world){
+  constructor(x, y, world, buildingsPath, timeInBuildings){
     super(x, y, 1, 1, world)
+    this.buildingsPath = buildingsPath
+    this.timeInBuildings = timeInBuildings
+    this.currentBuilding = this.buildingsPath[0];
+    this.time = timeInBuildings[0]
     this.color = characterColor;
   }
   // Based on where the character is now, we get its new move
   getMove(){
-    if(this.world.canMove(this, this.x + 1, this.y)){
-      return [this.x + 1, this.y]
-    }
-    return [this.x, this.y]
+    let distances = this.currentBuilding.distancesFrom;
+    // Make sure every coordinate is in the map and valid
+    let possibleValues = moves.map((diff) => [this.x + diff[0], this.y + diff[1]]).filter((coord) => this.world.isEmpty(coord[0], coord[1]))
+
+    // Remove anything that gives us a lower rating
+    possibleValues = possibleValues.filter((coord) => distances[coord[0]][coord[1]] <= distances[this.x][this.y])
+
+    // Sort by rating
+    possibleValues.sort((first, second) => distances[first[0]][first[1]] - distances[second[0]][second[1]])
+
+    return possibleValues.length > 0 ? possibleValues[0] : [this.x, this.y]
   }
   render(camera){
     camera.render(this.x, this.y, this.width, this.height, this.color);
@@ -229,9 +281,42 @@ class Character extends Entity{
 class Building extends Entity{
   constructor(x, y, width, height, world){
     super(x, y, width, height, world)
+    this.distancesFrom = []
+    this.characters = []
+    this.characterTimeIn = []
   }
-  tick(){
+  doBFS(covered){
+    var distance = []
+    for(let i = 0; i < this.world.width; ++i){
+      distance.push(new Array(this.world.height).fill(99999999))
+    }
 
+    var queue = createLoop(this.x, this.y, this.width, this.height).filter((coord) => inRange(coord[0], coord[1], this.world.width, this.world.height))
+    queue.forEach((coord) => covered[coord[0]][coord[1]] = true)
+    let currentIter = 1
+    for(;queue.length > 0; ++currentIter){
+      var buffer = []
+      while(queue.length > 0){
+        let [x, y] = queue.shift()
+        distance[x][y] = currentIter
+        for(let move of moves){
+          let [dx, dy] = move
+          let nx = x + dx
+          let ny = y + dy
+          if(inRange(nx, ny, this.world.width, this.world.height) && !covered[nx][ny]){
+            buffer.push([nx, ny])
+            covered[nx][ny] = true
+          }
+        }
+      }
+      queue = buffer;
+    }
+
+    return distance
+  }
+  enterBuilding(character){
+    this.characters.push(character)
+    this.characterTimeIn.push(timeInBuilding)
   }
 }
 
@@ -242,25 +327,37 @@ const maxPeoplePerSpawn = 2;
 class House extends Building{
   constructor(x, y, width, height, world, residents){
     super(x, y, width, height, world);
-    this.residents = residents;
     this.spawnChance = residentSpawnChance
     this.maxAtOnce = maxPeoplePerSpawn
     this.world = world
     this.color = houseColor;
+
+    this.inHome = []
+    for(let i = 0; i < residents; ++i){
+      this.inHome.push(new Character(0, 0, this.world, [null], [null]))
+    }
+    this.residentsInHome = Array.from(this.inHome);
   }
-  getSpawnLocations(){
+  tick(){
     let loop = createLoop(this.x, this.y, this.width, this.height).filter((coord) => this.world.isEmpty(coord[0], coord[1]))
 
     var toSpawn = []
 
-    while(Math.random() < this.spawnChance && toSpawn.length < this.maxAtOnce && this.residents > 0 && loop.length > 0){
+    while(Math.random() < this.spawnChance && toSpawn.length < this.maxAtOnce && this.residentsInHome.length > 0 && loop.length > 0){
       let ci = Math.floor(Math.random() * loop.length);
       let [x, y] = loop[ci]
       toSpawn.push([x, y])
       loop.splice(ci, 1)
-      --this.residents;
     }
-    return toSpawn
+
+    
+    for(let coord of toSpawn){
+      let [x, y] = coord
+      var toAdd = this.residentsInHome.shift()
+      toAdd.buildingsPath = [this.world.randomShop()]
+      toAdd.timeInBuildings = [5]
+      this.world.addCharacter(toAdd)
+    }
   }
   render(camera){
     camera.render(this.x, this.y, this.width, this.height, this.color);
@@ -268,13 +365,22 @@ class House extends Building{
 }
 
 const shopColor = "blue"
+const timeInBuilding = 5
 class Shop extends Building{
   constructor(x, y, width, height, world){
     super(x, y, width, height, world)
     this.color = shopColor
   }
   tick(){
-
+    for(let i = 0; i < this.characters.length; ++i){
+      ++this.characterTimeIn[i];
+      if(this.characterTimeIn[i] >= timeInBuilding){
+        let around = createLoop(this.x, this.y, this.width, this.height).filter((coord) => this.world.isEmpty(coord[0], coodr[1]))
+        let targetCoord = around[Math.floor(Math.random() * around.length)]
+        this.world.addCharacter(this.characters.shift())
+        this.characterTimeIn.shift()
+      }
+    }
   }
   render(camera){
     camera.render(this.x, this.y, this.width, this.height, this.color)
@@ -318,7 +424,7 @@ function buildWorld(format, info){
     let cells = lines[y].split(" ")
     for(let x = 0; x < cells.length; ++x){
       if(cells[x] == "C"){
-        toreturn.setCovered(x, y, true)
+        toreturn.setUnwalkable(x, y, true)
       }
     }
   }
@@ -336,19 +442,25 @@ function buildWorld(format, info){
     }
   }
 
+  toreturn.initializeBFS();
+
   return toreturn
 }
 
-function initialize(){
+function initializeFiles(){
   for(let id in textTags){
-    getText("./world_files/" + textTags[id], id)
+    setText("./world_files/" + textTags[id], id)
   }
 }
 
-function getText(file, id){
+function setText(file, id){
   fetch(file)
   .then(response => response.text())
   .then((data) => {
     texts[id] = data
   })
+}
+
+function inRange(x, y, worldWidth, worldHeight){
+  return 0 <= x && x < worldWidth && 0 <= y && y < worldHeight;
 }

@@ -62,6 +62,7 @@ h1 {
   width: 100%;
   background-image: url("./images/playingBackground.webp");
   background-size: cover;
+  text-align: center;
 }
 
 #startHeading {
@@ -95,4 +96,67 @@ h1 {
   
 }
 
+#mainMenuButton {
+  background-color: pink;
+  color: black;
+  border: 3px solid rgb(97, 76, 175);
+  padding: 16px 32px;
+  border-radius: 50px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-family: Copperplate, Papyrus, fantasy;
+  font-size: 20px;
+  transition-duration: 0.5s;
 
+  vertical-align: top;
+  margin-left: 0;
+}
+
+#mainMenuButton:hover {
+  transition-duration: 0.5s;
+  background-color: rgb(92, 153, 211); 
+  color: white;
+}
+
+#stats {
+  position: fixed;
+}
+
+#stats h2 {
+  text-align: center;
+  font-family: Trebuchet MS, sans-serif;
+  display: block;
+  padding: 20px 32px;
+  text-decoration: none;
+  font-size: 32px;
+}
+
+#stats h3 {
+  text-align: center;
+  font-family: Trebuchet MS, sans-serif;
+  display: block;
+  padding: 14px 16px;
+  text-decoration: none;
+  font-size: 17px;
+}
+
+#controlPanel .slider {
+  vertical-align: top;
+}
+
+#covinfo {
+  background-color: pink;
+  color: black;
+  border: 3px solid rgb(97, 76, 175);
+  padding: 16px 32px;
+  border-radius: 50px;
+  width: 30%;
+  vertical-align: center;
+  text-align: center;
+  line-height: center;
+  align-self: center;
+  box-align: center;
+  font-family: Copperplate, Papyrus, fantasy;
+  text-decoration: none;
+}
