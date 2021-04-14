@@ -3,9 +3,18 @@ var context;
 
 const textTags = {
   w1Format: "world1.txt",
-  w1Info: "world1_info.txt"
+  w1Info: "world1_info.txt",
+  w2Format: "world2.txt",
+  w2Info: "world2_info.txt"
 }
 var texts = {}
+
+// Infection Rate when someone is right next to you outside
+const infectionRate = 0.03;
+// Infection rate inside houses
+const indoorInfectionRate = 0.001
+
+const maskReductionInDecimal = 0.621;
 
 window.onload = function(){
   // Starting code of the program
@@ -17,20 +26,29 @@ window.onload = function(){
   // what to do when to start a new game
   document.getElementById("newGameButton").onclick = function(){
     document.getElementById("menuContainer").hidden = true;
-    document.getElementById("gameContainer").hidden = false;
-    start();
+    document.getElementById("splashScreen").hidden = false;
+    setTimeout(function(){
+     document.getElementById("splashScreen").hidden = true
+     document.getElementById("gameContainer").hidden = false
+      start();
+    }, 9000)
   }
 
   document.getElementById("mainMenuButton").onclick = function() {
     document.getElementById("menuContainer").hidden = false;
     document.getElementById("gameContainer").hidden = true;
-    //TODO make a reset game function
   }
 
   document.getElementById("howto").onclick = function(){
     document.getElementById("menuContainer").hidden = true;
     document.getElementById("gameContainer").hidden = true;
     document.getElementById("rules").hidden = false;
+  }
+
+  document.getElementById("backButton").onclick = function(){
+    document.getElementById("menuContainer").hidden = false;
+    document.getElementById("gameContainer").hidden = true;
+    document.getElementById("rules").hidden = true;
   }
 
   initializeFiles()
@@ -41,13 +59,17 @@ var gameRunning = false;
 // Milliseconds between each frame
 const timeDelta = 300;
 
+function onClick(){
+  
+}
+
 // What to do when the game starts
 function start(){
   if(Object.keys(texts).length != Object.keys(textTags).length){
     setTimeout(start, 50)
     return
   }
-  world = buildWorld(texts.w1Format, texts.w1Info)
+  world = buildWorld(texts.w2Format, texts.w2Info)
 
   gameRunning = true;
   update()
@@ -59,7 +81,7 @@ function update(){
     world.tick();
     context.clearRect(0, 0, canvas.width, canvas.height);
     world.render();
-    setTimeout(update, timeDelta)
+    setTimeout(update, timeDelta - parseInt(document.getElementById("speedSlider").value))
   }
 }
 
@@ -73,6 +95,7 @@ class World{
   constructor(cellsX, cellsY){
     this.width = cellsX;
     this.height = cellsY;
+    this.age = 0;
     console.log("created a new world!")
 
     // covered[x][y]
@@ -88,10 +111,34 @@ class World{
     this.houses = []
     this.shops = []
 
-    this.camera = new Camera(0, 0, 30)
+    this.maskPercentage = 0
+    this.sdRange = 0
+    this.vaccinePercentage
+
+    this.outsideInfectionRate = infectionRate
+    this.indoorInfectionRate = indoorInfectionRate
+
+    this.camera = new Camera(0, 0, 10)
   }
   // Call this before adding any people
-  initializeBFS(){
+  initialize(){
+    let allCharacters = this.characters
+    for(let house of this.houses){
+      allCharacters = allCharacters.concat(house.residentsInHome)
+    }
+    let noneInfected = true
+    for(let person in allCharacters){
+      if(person.infected){
+        noneInfected = false
+        break
+      }
+    }
+    if(noneInfected){
+      if(allCharacters.length > 0){
+        allCharacters[Math.floor(Math.random() * allCharacters.length)].infected = true
+      }
+    }
+
     for(let shop of this.shops){
       shop.distancesFrom = shop.doBFS(JSON.parse(JSON.stringify(this.map)))
     }
@@ -118,26 +165,73 @@ class World{
   }
   // At each time step
   tick(){
+    this.age++;
     // Everything that can tick will tick()
-    for(let character of this.characters){
-        if(this.covered[character.x][character.y] != null){
-          let [newX, newY] = character.getMove();
-          if(this.canMove(character, newX, newY)){
-            this.move(character, newX, newY)
-          }
-        }
-    }
     for(let house of this.houses){
       house.tick()
     }
     for(let shop of this.shops){
       shop.tick()
     }
+    for(let character of this.characters){
+        character.getMove()
+        character.tick()
+    }
+    
+    //day counter
+    document.getElementById("day").innerHTML = ''.concat("Day: ", Math.floor(this.age/48));
 
     //pass character count to html
-    var characterCountHTML = document.getElementById("characterCount").innerHTML;
-    console.log(characterCountHTML); 
-    //= ''.concat("Character Count: ", this.characters.length);
+    var characterCountHTML = document.getElementById("characterCount");
+    var healthyCountHTML = document.getElementById("healthyCount");
+    var infectedCountHTML = document.getElementById("infectedCount");
+    var count = this.characters.length;
+    var healthy = 0;
+    var infected = 0;
+
+    for (let char of this.characters) {
+      if (char.infected == true) {
+        infected++;
+      } else {
+        healthy++;
+      }
+    }
+    for  (let house of this.houses) {
+      for (let char of house.characters.concat(house.residentsInHome)) {
+        if (char.infected == true) {
+          infected++;
+        } else {
+          healthy++;
+        }
+        ++count
+      }
+    }
+    for (let shop of this.shops) {
+      count += shop.characters.length;
+      for (let char of shop.characters) {
+        if (char.infected == true) {
+          infected++;
+        } else {
+          healthy++;
+        }
+      }
+    }
+    characterCountHTML.innerHTML = ''.concat("Population: ", count);
+    healthyCountHTML.innerHTML = ''.concat("Healthy: ", healthy);
+    infectedCountHTML.innerHTML = ''.concat("Infected: ", infected);
+    
+    //update value of the control panels
+    document.getElementById("maskPercentage").innerHTML = document.getElementById("maskSlider").value;
+    this.maskPercentage = parseInt(document.getElementById("maskPercentage").innerHTML);
+    document.getElementById("sdRange").innerHTML = document.getElementById("sdSlider").value;
+    this.sdRange = parseInt(document.getElementById("sdRange").innerHTML);
+    document.getElementById("vaccinatedPercentage").innerHTML = document.getElementById("vaccineSlider").value;
+    this.vaccinePercentage = parseInt(document.getElementById("vaccinatedPercentage").innerHTML);
+
+    this.outsideInfectionRate = infectionRate - infectionRate * this.maskPercentage * maskReductionInDecimal / 100
+    this.indoorInfectionRate = indoorInfectionRate - indoorInfectionRate * this.maskPercentage * maskReductionInDecimal / 100
+
+    //base infection rate * mask percentage * 1/distance
   }
   render(){
     for(let x = 0; x < this.width; ++x){
@@ -161,6 +255,23 @@ class World{
     if(this.isEmpty(character.x, character.y)){
       this.covered[character.x][character.y] = true
       this.characters.push(character)
+    }else{
+      console.log("couldn't add character")
+    }
+  }
+  characterDied(character){
+    for(let i = 0; i < this.characters.length; ++i){
+      if(this.characters[i] == character){
+        this.characters.splice(i, 1)
+        this.covered[character.x][character.y] = false
+        return
+      }
+    }
+    for(let house of this.houses){
+      house.removeCharacter(character)
+    }
+    for(let shop of this.shops){
+      shop.removeCharacter(character)
     }
   }
   addHouse(house){
@@ -211,8 +322,8 @@ class World{
     return this.shops[Math.floor(Math.random() * this.shops.length)]
   }
   intoBuilding(building, character){
-    building.enterBuilding(character)
     this.deleteCharacter(character)
+    building.enterBuilding(character)
   }
 }
 
@@ -232,7 +343,9 @@ class Camera{
 }
 
 const characterColor = "lightblue";
+const infectedCharacterColor = "red"
 const houseColor = "pink";
+const immuneColor = "#FFFF00"
 
 // The possible adjacent moves
 const moves = [[-1, 0], [1, 0], [0, 1], [0, -1]]
@@ -248,32 +361,124 @@ class Entity{
   }
 }
 
+const liveOrDiePercentage = 0.005;
+const mortalityRate = 0.1
 // Each person
 class Character extends Entity{
-  constructor(x, y, world, buildingsPath, timeInBuildings){
+  constructor(x, y, world){
     super(x, y, 1, 1, world)
+    this.buildingsPath = null
+    this.timeInBuildings = null
+    this.currentBuilding = null
+    this.time = 0
+
+    this.color = characterColor;
+    this.infectedColor = infectedCharacterColor;
+    this.immuneColor = immuneColor
+
+    this.infected = Math.random() < 0.2;
+
+    this.resultPercentage = liveOrDiePercentage
+    this.deathChance = mortalityRate
+    this.immune = false;
+  }
+  // For when the character goes out of the house(we have a new shopping list)
+  goOut(buildingsPath, timeInBuildings, x, y){
     this.buildingsPath = buildingsPath
     this.timeInBuildings = timeInBuildings
-    this.currentBuilding = this.buildingsPath[0];
-    this.time = timeInBuildings[0]
-    this.color = characterColor;
+    this.outOfBuilding(x, y)
+  }
+  particlesIn(){
+    if(!this.immune){
+      this.infected = true
+      this.startTimeInfected = world.age;
+    }
+  }
+  tick(){
+    if(this.infected){
+      if(Math.random() < this.resultPercentage){
+        if(Math.random() < this.deathChance){
+          this.world.characterDied(this)
+        }else{
+          this.immune = true
+          this.infected = false
+        }
+      }
+    }
   }
   // Based on where the character is now, we get its new move
   getMove(){
+    if(this.infected){
+      let nearby = this.world.characters.filter((character) => Math.abs(character.x - this.x) <= 2 && Math.abs(character.y - this.y) <= 2 && character != this)
+      for(let c of nearby){
+        let probability = 1 / (Math.sqrt((c.x - this.x) * (c.x - this.y) + (c.y - this.y) * (c.y - this.y))) * this.world.outsideInfectionRate
+        if(Math.random() < probability){
+          c.particlesIn()
+        }
+      }
+    }
+
     let distances = this.currentBuilding.distancesFrom;
+    if(distances[this.x][this.y] == 1){
+      this.world.intoBuilding(this.currentBuilding, this)
+      return
+    }
+
     // Make sure every coordinate is in the map and valid
     let possibleValues = moves.map((diff) => [this.x + diff[0], this.y + diff[1]]).filter((coord) => this.world.isEmpty(coord[0], coord[1]))
 
-    // Remove anything that gives us a lower rating
-    possibleValues = possibleValues.filter((coord) => distances[coord[0]][coord[1]] <= distances[this.x][this.y])
-
     // Sort by rating
-    possibleValues.sort((first, second) => distances[first[0]][first[1]] - distances[second[0]][second[1]])
+    possibleValues.sort((first, second) => distances[second[0]][second[1]] - distances[first[0]][first[1]])
 
-    return possibleValues.length > 0 ? possibleValues[0] : [this.x, this.y]
+    if(possibleValues.length == 0){
+      return
+    }
+
+    var distancing = this.world.sdRange
+    let nearbies = this.world.characters.filter((character) => Math.abs(character.x - this.x) <= 3 && Math.abs(character.y - this.y) <= 3).filter((c) => c != this)
+
+    let maxVal = distances[possibleValues[0][0]][possibleValues[0][1]]
+    // score based on how it can get to the home
+    let scores = possibleValues.map((coord) => Math.abs(distances[coord[0]][coord[1]] - maxVal - 1))
+
+    
+    scores = scores.map(function(currentScore, i){
+      let [x, y] = possibleValues[i]
+      if(nearbies.length == 0){
+        return currentScore
+      }
+      let closestDistance = Math.sqrt(nearbies.map((char) => (char.x - x) * (char.x - x) + (char.y - y) * (char.y - y)).reduce((last, current) => Math.min(last, current)))
+      
+      let multiplier = Math.pow(1 - distancing / 3 / (Math.pow(2, 2*(closestDistance - 2.5)) + 1), 2)
+      return currentScore * multiplier
+    })
+
+    let maxScore = scores.reduce((last, cur) => Math.max(last, cur))
+    for(let i = 0; i < scores.length; ++i){
+      if(scores[i] == maxScore){
+        this.world.move(this, possibleValues[i][0], possibleValues[i][1])
+      }
+    }
+  }
+  // For when character goes out of a building
+  outOfBuilding(x, y){
+    if(this.buildingsPath.length > 0){
+      this.currentBuilding = this.buildingsPath.shift()
+      this.time = this.timeInBuildings.shift()
+    }
+    this.x = x
+    this.y = y
   }
   render(camera){
-    camera.render(this.x, this.y, this.width, this.height, this.color);
+    let color = ""
+    if(this.infected){
+      color = this.infectedColor
+    }else if(this.immune){
+      color = this.immuneColor
+    }else{
+      color = this.color
+    }
+    camera.render(this.x, this.y, this.width, this.height, color);
   }
 }
 
@@ -314,9 +519,31 @@ class Building extends Entity{
 
     return distance
   }
+  removeCharacter(character){
+    for(let i = 0; i < this.characters.length; ++i){
+      if(character == this.characters[i]){
+        this.characters.splice(i, 1)
+        this.characterTimeIn.splice(i, 1)
+      }
+    }
+  }
+  letCharactersOut(){
+    for(let i = 0; i < this.characters.length; ++i){
+      ++this.characterTimeIn[i];
+      if(this.characterTimeIn[i] >= this.characters[i].time){
+        let around = createLoop(this.x, this.y, this.width, this.height).filter((coord) => this.world.isEmpty(coord[0], coord[1]))
+        let targetCoord = around[Math.floor(Math.random() * around.length)]
+
+        let character = this.characters.shift()
+        character.outOfBuilding(targetCoord[0], targetCoord[1])
+        this.world.addCharacter(character)
+        this.characterTimeIn.shift()
+      }
+    }
+  }
   enterBuilding(character){
     this.characters.push(character)
-    this.characterTimeIn.push(timeInBuilding)
+    this.characterTimeIn.push(0)
   }
 }
 
@@ -332,13 +559,40 @@ class House extends Building{
     this.world = world
     this.color = houseColor;
 
+    // All people who belong in this home
     this.inHome = []
     for(let i = 0; i < residents; ++i){
-      this.inHome.push(new Character(0, 0, this.world, [null], [null]))
+      this.inHome.push(new Character(0, 0, this.world))
     }
+    // All residents who are actually in this house
     this.residentsInHome = Array.from(this.inHome);
   }
+  removeCharacter(character){
+    super.removeCharacter(character)
+    for(let i = 0; i < this.residentsInHome; ++i){
+      if(this.residentsInHome[i] == character){
+        this.residentsInHome.splice(i, 1)
+      }
+    }
+    for(let i = 0; i < this.inHome; ++i){
+      if(this.inHome[i] == character){
+        this.inHome.splice(i, 1)
+      }
+    }
+  }
   tick(){
+    let allPeople = this.residentsInHome.concat(this.characters)
+    for(let person of allPeople){
+      person.tick()
+      if(person.infected){
+        for(let other of allPeople){
+          if(Math.random() < this.world.indoorInfectionRate){
+            other.particlesIn()
+          }
+        }
+      }
+    }
+
     let loop = createLoop(this.x, this.y, this.width, this.height).filter((coord) => this.world.isEmpty(coord[0], coord[1]))
 
     var toSpawn = []
@@ -346,41 +600,47 @@ class House extends Building{
     while(Math.random() < this.spawnChance && toSpawn.length < this.maxAtOnce && this.residentsInHome.length > 0 && loop.length > 0){
       let ci = Math.floor(Math.random() * loop.length);
       let [x, y] = loop[ci]
-      toSpawn.push([x, y])
       loop.splice(ci, 1)
-    }
 
-    
-    for(let coord of toSpawn){
-      let [x, y] = coord
       var toAdd = this.residentsInHome.shift()
-      toAdd.buildingsPath = [this.world.randomShop()]
-      toAdd.timeInBuildings = [5]
+      toAdd.goOut([this.world.randomShop(), this], [20, 0], x, y)
       this.world.addCharacter(toAdd)
     }
+
+    this.letCharactersOut()
   }
   render(camera){
     camera.render(this.x, this.y, this.width, this.height, this.color);
   }
+  enterBuilding(character){
+    if(this.inHome.includes(character)){
+      this.residentsInHome.push(character)
+    }else{
+      this.characters.push(character)
+      this.characterTimeIn.push(0)
+    }
+  }
 }
 
 const shopColor = "blue"
-const timeInBuilding = 5
 class Shop extends Building{
   constructor(x, y, width, height, world){
     super(x, y, width, height, world)
     this.color = shopColor
   }
   tick(){
-    for(let i = 0; i < this.characters.length; ++i){
-      ++this.characterTimeIn[i];
-      if(this.characterTimeIn[i] >= timeInBuilding){
-        let around = createLoop(this.x, this.y, this.width, this.height).filter((coord) => this.world.isEmpty(coord[0], coodr[1]))
-        let targetCoord = around[Math.floor(Math.random() * around.length)]
-        this.world.addCharacter(this.characters.shift())
-        this.characterTimeIn.shift()
+    for(let person of this.characters){
+      person.tick()
+      if(person.infected){
+        for(let other of this.characters){
+          if(Math.random() < this.world.indoorInfectionRate){
+            other.particlesIn()
+          }
+        }
       }
     }
+
+    this.letCharactersOut()
   }
   render(camera){
     camera.render(this.x, this.y, this.width, this.height, this.color)
@@ -417,13 +677,13 @@ function createLoop(x, y, width, height){
 }
 
 function buildWorld(format, info){
-  let lines = format.split("\n")
-  var toreturn = new World(lines[0].split(" ").length, lines.length)
+  let lines = format.split("\n").filter((line) => line != "")
+  var toreturn = new World(lines[0].split(" ").filter((cell) => cell != "").length, lines.length)
 
   for(let y = 0; y < lines.length; ++y){
-    let cells = lines[y].split(" ")
+    let cells = lines[y].split(" ").filter((cell) => cell != "")
     for(let x = 0; x < cells.length; ++x){
-      if(cells[x] == "C"){
+      if(cells[x].trim() === "C"){
         toreturn.setUnwalkable(x, y, true)
       }
     }
@@ -442,7 +702,7 @@ function buildWorld(format, info){
     }
   }
 
-  toreturn.initializeBFS();
+  toreturn.initialize();
 
   return toreturn
 }

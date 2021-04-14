@@ -21,13 +21,16 @@
         <a href="https://www.cdc.gov/coronavirus/2019-ncov/index.html">COVID-19 Information</a>
       </div>
     </div>
-    <div id="rules" hidden>  
-    <h1>
-     Instructions
-    </h1>  
-    <body>
-      Hello! Welcome to our COVID-19 Simulator, named Patient Ø.
-    </body>
+      <div id="rules" hidden>  
+        <h1>
+        Instructions
+        </h1>  
+        <div id="bodpara"
+        <p> 
+          Hello! Welcome to our COVID-19 Simulator, called Patient Ø. You can utilize sliders to change aspects including mask wearing, social distancing, vaccines/immune, etc. The code will input and reflect the changes, and will display the fact-based simulations. The light blue squares represent the people. The green sections symbolize grass, but people can't walk on grass, and must stay on the pathways which are light brown. The blue rectangles are stores, and the light pink rectangles represent buildings in general. The people will walk around in the town, alternating between various tasks and visiting different buildings. The decisions you make on the sliders will impact the spread of the virus in the population. Good luck!
+        </p>
+        <button id="backButton">Back</button>
+      </div>
     </div>
     <!-- <button id="PlaceHolder" class="menuButton">COVID-19 Information</button> -->
 
@@ -40,7 +43,7 @@
       <div id="stats">
         <h2 id="statsTitle">Statistics</h2>
         <h3 id="day" class="statistics">Day: 0</h3> 
-        <h3 id="characterCount" class="statistics">Character Count: 0</h3> 
+        <h3 id="characterCount" class="statistics">Population: 0</h3> 
         <h3 id="healthyCount" class="statistics">Healthy: 0</h3>
         <h3 id="infectedCount" class="statistics">Infected: 0  </h3>
         <h3 id="deathCount" class="statistics">Deaths: 0 </h3>
@@ -51,16 +54,28 @@
 
       <div id="controlPanel"> 
         <h3>Mask-Wearing Percentage</h3>
-        <input type="range" min="1" max="100" value="50" id="maskSlider" class="slider">
-        <label id="maskPercentage">100%</label>
+        <input type="range" min="0" max="100" value="50" id="maskSlider" class="slider">
+        <label id="maskPercentage">50%</label>
+
+        <h3>Social Distancing Range</h3>
+        <input type="range" min="0" max="3" value="1" id="sdSlider" class="slider">
+        <label id="sdRange">1</label>
+
+        <h3>Vaccinated Percentage</h3>
+        <input type="range" min="0" max="100" value="0" id="vaccineSlider" class="slider">
+        <label id="vaccinatedPercentage">0%</label>
+
+        <h3>Simulation Speed</h3>
+        <input type="range" min="0" max="275" value="0" id="speedSlider" class="slider">
+        <label id="simulationSpeed">0%</label>
       </div>
 
 
       
     </div>
+    <div id="splashScreen" hidden>
+      <image src="./images/splash.gif"></image>
+    </div>
   </body>
 
 </html>
-
-
-<!--<button id="PlaceHolder" class="menuButton">Free V-Bucks</button>-->
