@@ -104,6 +104,8 @@ h1 {
   font-size: 20px;
   transition-duration: 0.5s;
 
+  margin: 20px;
+
   vertical-align: top;
   margin-left: 0;
 }
@@ -141,8 +143,8 @@ h1 {
 
 #controlPanel {
   position:fixed;
-  right: 10px;
-  bottom: 50px;
+  right: 30px;
+  bottom: 80px;
   /*
   vertical-align: top;
   float:right;

@@ -27,7 +27,7 @@ const residentSpawnChance = 0.1;
 const maxPeoplePerSpawn = 10;
 
 // At each frame, when the virus will manifest itself(either the person dies or becomes immune)
-const liveOrDiePercentage = 0.0004;
+const liveOrDiePercentage = 0.0005;
 const mortalityRate = 0.25
 
 var world;
@@ -35,6 +35,7 @@ var gameRunning = false;
 var initialPopulation = 0;
 // Milliseconds between each frame
 const timeDelta = 300;
+const renderTimeDelta = 40
 
 // Colors for each character
 const characterColor = "lightblue";
@@ -46,6 +47,19 @@ const immuneColor = "#FFFF00"
 const moves = [[-1, 0], [1, 0], [0, 1], [0, -1]]
 
 const shopColor = "blue"
+
+// This keeps track of whether or not a key is pressed down
+var isKeyDown = {
+  "ArrowLeft": false,
+  "ArrowRight": false,
+  "ArrowDown": false,
+  "ArrowUp": false
+}
+// the pixel movement is timeDelta * cameraPixelMovement
+const cameraPixelMovement = 1
+const cameraCellWidth = 10
+var mouseCoords = [0, 0]
+
 
 window.onload = function(){
   // Starting code of the program
@@ -68,6 +82,7 @@ window.onload = function(){
   document.getElementById("mainMenuButton").onclick = function() {
     document.getElementById("menuContainer").hidden = false;
     document.getElementById("gameContainer").hidden = true;
+    gameRunning = false
   }
 
   document.getElementById("howto").onclick = function(){
@@ -83,6 +98,17 @@ window.onload = function(){
   }
 
   document.getElementById("restart").onclick = restart
+  
+
+  document.onkeydown = function(event){
+    isKeyDown[event.code] = true
+  }
+  document.onkeyup = function(event){
+    isKeyDown[event.code] = false
+  }
+  document.onmousemove = function(event){
+    mouseCoords = [event.clientX, event.clientY]
+  }
 
   initializeFiles()
 }
@@ -105,7 +131,16 @@ function start(){
     world.vaccinate(parseInt(document.getElementById("vaccinatePercentage").innerHTML) / 100)
   }
 
+  canvas.onmousedown = function(){
+    world.camera.isMouseDown = true
+    world.camera.lastRecordedMouseCoord = JSON.parse(JSON.stringify(mouseCoords))
+  }
+  document.onmouseup = function(){
+    world.camera.isMouseDown = false
+  }
+
   update()
+  render()
 }
 
 function restart(){
@@ -117,9 +152,17 @@ function restart(){
 function update(){
   if(gameRunning){
     world.tick();
+    setTimeout(update, timeDelta - parseInt(document.getElementById("speedSlider").value))
+  }
+}
+
+// A more frequently occuring function
+function render(){
+  if(gameRunning){
+    world.camera.moveDimensions()
     context.clearRect(0, 0, canvas.width, canvas.height);
     world.render();
-    setTimeout(update, timeDelta - parseInt(document.getElementById("speedSlider").value))
+    setTimeout(render, renderTimeDelta)
   }
 }
 
@@ -156,7 +199,7 @@ class World{
     this.outsideInfectionRate = infectionRate
     this.indoorInfectionRate = indoorInfectionRate
 
-    this.camera = new Camera(0, 0, 10)
+    this.camera = new Camera(0, 0, cameraCellWidth)
   }
   // Call this before adding any people
   initialize(){
@@ -406,12 +449,29 @@ class Camera{
     this.x = x;
     this.y = y;
     this.pixelWidth = pixelWidth;
+
+    this.lastRecordedMouseCoord = [0, 0]
+    this.isMouseDown = false
   }
   // Everything is stored in cells, so we need to convert that into pixels
   render(cellX, cellY, cellWidth, cellHeight, color){
     let startX = cellX * this.pixelWidth - this.x;
     let startY = cellY * this.pixelWidth - this.y;
     drawRect(startX, startY, cellWidth * this.pixelWidth, cellHeight * this.pixelWidth, color);
+  }
+  moveDimensions(){
+    if(this.isMouseDown){
+      let [cx, cy] = mouseCoords
+      let [ox, oy] = this.lastRecordedMouseCoord
+      let diffX = ox - cx
+      let diffY = oy - cy
+      this.lastRecordedMouseCoord = mouseCoords
+
+      this.x += diffX
+      this.y += diffY
+      this.x = Math.max(Math.min(world.width * cameraCellWidth - canvas.width, this.x), 0)
+      this.y = Math.max(Math.min(world.height * cameraCellWidth - canvas.height, this.y), 0)
+    }
   }
 }
 
