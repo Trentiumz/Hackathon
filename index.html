@@ -17,7 +17,7 @@
       
       <button id="newGameButton" class="menuButton">New Simulation</button>
       <button id="howto" class="menuButton">Instructions</button><br><br><br><br>
-      <a href="https://linktr.ee/Project0Studios" class="infoLink">COVID-19 Information</a>
+      <a href="https://linktr.ee/Project0Studios" target="_blank" class="infoLink">COVID-19 Information</a>
     </div>
       <div id="rules" hidden>  
         <h1>
@@ -35,9 +35,10 @@
     <!--Leave that code for a new button for educational information and resources.-->
 
     <div id="bottomBar">
-      <a href="https://github.com/Trentiumz/Hackathon">GitHub</a>
+      <a href="https://github.com/Trentiumz/Hackathon" target="_blank">GitHub</a>
     </div>
     <div id="worldChoiceScreen" hidden>
+      <h2 id="mapSelection">Select Map</h2>
       <button id="choiceNeighbourhoodButton" class="worldChoiceButton">Neighbourhood</button><br>
       <button id="choiceSuburbsButton" class="worldChoiceButton">Suburbs</button><br>
       <button id="choiceDowntownButton" class="worldChoiceButton">Downtown</button><br>
@@ -55,8 +56,9 @@
 
       <canvas width="700" height="700" id="gameCanvas"></canvas>
       <div id="gameMenu">
+        <button id="mainMenuButton" class="gameOptionButton">Main Menu</button><br>
         <button id="restart" class="gameOptionButton">Restart Simulation</button><br>
-        <button id="mainMenuButton" class="gameOptionButton">Main Menu</button>
+        <button id="ReCenter" class="gameOptionButton">Re-Center Camera</button>
       </div>
       
 

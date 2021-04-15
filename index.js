@@ -145,6 +145,9 @@ function start(format, info) {
   document.onwheel = function (event) {
     world.camera.pixelWidth += event.deltaY * -0.005;
   }
+  document.getElementById("ReCenter").onclick = function () {
+    world.camera.resetCamera();
+  }
 
   canvas.onmousedown = function () {
     world.camera.isMouseDown = true
@@ -499,6 +502,17 @@ class Camera {
       this.x = Math.max(Math.min(world.width * this.pixelWidth - canvas.width, this.x), 0)
       this.y = Math.max(Math.min(world.height * this.pixelWidth - canvas.height, this.y), 0)
     }
+  }
+  resetCamera() {
+    this.x = 0;
+    this.y = 0;
+    this.pixelWidth = 10;
+    this.lastRecordedMouseCoord = [0, 0];
+    this.isMouseDown = false;
+    isKeyDown.ArrowDown = false;
+    isKeyDown.ArrowUp = false;
+    isKeyDown.ArrowLeft = false;
+    isKeyDown.ArrowRight = false;
   }
 }
 

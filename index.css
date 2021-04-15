@@ -240,7 +240,7 @@ h1 {
   position: fixed;
   margin: auto;
   width: 500px;
-  height: 500px;
+  height: 550px;
   left: 0;
   right: 0;
   top: 0;
@@ -264,8 +264,15 @@ h1 {
   width: 150px;
   height: 75px;
 
+  font-family: Copperplate, Papyrus, fantasy;
+
   vertical-align: middle;
   transition-duration: 0.4s;
+}
+
+#worldChoiceScreen h2 {
+  
+  font-family: Copperplate, Papyrus, fantasy;
 }
 
 .worldChoiceButton:hover{
