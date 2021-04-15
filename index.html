@@ -16,10 +16,8 @@
       <h1 id="startHeading">MENU</h1>
       
       <button id="newGameButton" class="menuButton">New Simulation</button>
-      <button id="howto" class="menuButton">Instructions</button><br>
-      <div id="covinfo">
-        <a href="https://www.cdc.gov/coronavirus/2019-ncov/index.html">COVID-19 Information</a>
-      </div>
+      <button id="howto" class="menuButton">Instructions</button><br><br><br><br>
+      <a href="https://linktr.ee/Project0Studios" class="infoLink">COVID-19 Information</a>
     </div>
       <div id="rules" hidden>  
         <h1>
@@ -49,8 +47,12 @@
         <h3 id="deathCount" class="statistics">Deaths: 0 </h3>
       </div>
 
-      <canvas width="1000" height="600" id="gameCanvas"></canvas>
-      <button id="mainMenuButton" class="menuButton">Main Menu</button>
+      <canvas width="700" height="700" id="gameCanvas"></canvas>
+      <div id="gameMenu">
+        <button id="restart" class="gameOptionButton">Restart Simulation</button><br>
+        <button id="mainMenuButton" class="gameOptionButton">Main Menu</button>
+      </div>
+      
 
       <div id="controlPanel"> 
         <h3>Mask-Wearing Percentage</h3>
@@ -61,13 +63,14 @@
         <input type="range" min="0" max="3" value="1" id="sdSlider" class="slider">
         <label id="sdRange">1</label>
 
-        <h3>Vaccinated Percentage</h3>
-        <input type="range" min="0" max="100" value="0" id="vaccineSlider" class="slider">
-        <label id="vaccinatedPercentage">0%</label>
+        <h3>Vaccinate People</h3>
+        <input type="range" min="1" max="25" value="1" id="vaccineSlider" class="slider">
+        <label id="vaccinatePercentage">1%</label><br>
+        <button id="vaccinateButton">Vaccinate!</button>
 
         <h3>Simulation Speed</h3>
         <input type="range" min="0" max="275" value="0" id="speedSlider" class="slider">
-        <label id="simulationSpeed">0%</label>
+        <label id="simulationSpeed">0</label>
       </div>
 
 

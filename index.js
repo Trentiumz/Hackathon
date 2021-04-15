@@ -5,16 +5,47 @@ const textTags = {
   w1Format: "world1.txt",
   w1Info: "world1_info.txt",
   w2Format: "world2.txt",
-  w2Info: "world2_info.txt"
+  w2Info: "world2_info.txt",
+  w3Format: "world3.txt",
+  w3Info: "world3_info.txt", 
+  w4Format: "world4.txt",
+  w4Info: "world4_info.txt"
 }
 var texts = {}
 
 // Infection Rate when someone is right next to you outside
 const infectionRate = 0.03;
 // Infection rate inside houses
-const indoorInfectionRate = 0.001
+const indoorInfectionRate = 0.005
+const maxInfection = 2
+const startingInfectedChance = 0
 
-const maskReductionInDecimal = 0.621;
+const maskReductionInDecimal = 0.85;
+
+// At each frame, the chance for a house to spawn a resident
+const residentSpawnChance = 0.1;
+const maxPeoplePerSpawn = 10;
+
+// At each frame, when the virus will manifest itself(either the person dies or becomes immune)
+const liveOrDiePercentage = 0.0004;
+const mortalityRate = 0.25
+
+var world;
+var gameRunning = false;
+var initialPopulation = 0;
+// Milliseconds between each frame
+const timeDelta = 300;
+
+// Colors for each character
+const characterColor = "lightblue";
+const infectedCharacterColor = "red"
+const houseColor = "pink";
+const immuneColor = "#FFFF00"
+
+// The possible adjacent moves
+const moves = [[-1, 0], [1, 0], [0, 1], [0, -1]]
+
+const shopColor = "blue"
 
 window.onload = function(){
   // Starting code of the program
@@ -51,13 +82,10 @@ window.onload = function(){
     document.getElementById("rules").hidden = true;
   }
 
+  document.getElementById("restart").onclick = restart
+
   initializeFiles()
 }
-
-var world;
-var gameRunning = false;
-// Milliseconds between each frame
-const timeDelta = 300;
 
 function onClick(){
   
@@ -69,10 +97,20 @@ function start(){
     setTimeout(start, 50)
     return
   }
-  world = buildWorld(texts.w2Format, texts.w2Info)
-
+  initialPopulation = 0;
+  world = buildWorld(texts.w4Format, texts.w4Info)
   gameRunning = true;
+
+  document.getElementById("vaccinateButton").onclick = function(){
+    world.vaccinate(parseInt(document.getElementById("vaccinatePercentage").innerHTML) / 100)
+  }
+
   update()
+}
+
+function restart(){
+  initialPopulation = 0;
+  world = buildWorld(texts.w4Format, texts.w4Info);
 }
 
 // This is the "loop function"
@@ -185,6 +223,7 @@ class World{
     var characterCountHTML = document.getElementById("characterCount");
     var healthyCountHTML = document.getElementById("healthyCount");
     var infectedCountHTML = document.getElementById("infectedCount");
+    var deathCountHTML = document.getElementById("deathCount");
     var count = this.characters.length;
     var healthy = 0;
     var infected = 0;
@@ -216,22 +255,47 @@ class World{
         }
       }
     }
+    
+    console.log(this.getAllCharacters().length)
+
+    var deaths = initialPopulation - count;
     characterCountHTML.innerHTML = ''.concat("Population: ", count);
     healthyCountHTML.innerHTML = ''.concat("Healthy: ", healthy);
     infectedCountHTML.innerHTML = ''.concat("Infected: ", infected);
+    deathCountHTML.innerHTML = ''.concat("Deaths: ", deaths);
     
     //update value of the control panels
     document.getElementById("maskPercentage").innerHTML = document.getElementById("maskSlider").value;
     this.maskPercentage = parseInt(document.getElementById("maskPercentage").innerHTML);
     document.getElementById("sdRange").innerHTML = document.getElementById("sdSlider").value;
     this.sdRange = parseInt(document.getElementById("sdRange").innerHTML);
-    document.getElementById("vaccinatedPercentage").innerHTML = document.getElementById("vaccineSlider").value;
-    this.vaccinePercentage = parseInt(document.getElementById("vaccinatedPercentage").innerHTML);
+    document.getElementById("vaccinatePercentage").innerHTML = document.getElementById("vaccineSlider").value;
+    this.vaccinePercentage = parseInt(document.getElementById("vaccinatePercentage").innerHTML);
+    document.getElementById("simulationSpeed").innerHTML = document.getElementById("speedSlider").value
 
     this.outsideInfectionRate = infectionRate - infectionRate * this.maskPercentage * maskReductionInDecimal / 100
-    this.indoorInfectionRate = indoorInfectionRate - indoorInfectionRate * this.maskPercentage * maskReductionInDecimal / 100
+    this.indoorInfectionRate = (indoorInfectionRate - indoorInfectionRate * this.maskPercentage * maskReductionInDecimal / 100) * 1 / this.sdRange;
 
     //base infection rate * mask percentage * 1/distance
+  }
+  vaccinate(dRatio){
+    let numbers = new Set()
+    let characters = this.getAllCharacters()
+    if(dRatio > 1){
+      for(let character of characters){
+        if(!character.infected){
+          character.immune = true
+        }
+      }
+    }
+    while(numbers.size < dRatio * characters.length){
+      numbers.add(Math.floor(Math.random() * characters.length))
+    }
+    for(let i of numbers){
+      if(!characters[i].infected){
+        characters[i].immune = true
+      }
+    }
   }
   render(){
     for(let x = 0; x < this.width; ++x){
@@ -260,15 +324,15 @@ class World{
     }
   }
   characterDied(character){
+    for(let house of this.houses){
+      house.removeCharacter(character)
+    }
     for(let i = 0; i < this.characters.length; ++i){
       if(this.characters[i] == character){
         this.characters.splice(i, 1)
         this.covered[character.x][character.y] = false
         return
       }
-    }
-    for(let house of this.houses){
-      house.removeCharacter(character)
     }
     for(let shop of this.shops){
       shop.removeCharacter(character)
@@ -299,6 +363,15 @@ class World{
         }
       }
     }
+  }
+  getAllCharacters(){
+    let toreturn = []
+    for(let house of this.houses){
+      for(let character of house.inHome){
+        toreturn.push(character)
+      }
+    }
+    return toreturn
   }
   // Returns if something can spawn on this cell, or if it's empty(if it doesn't exist, it's the same as a border)
   isEmpty(x, y){
@@ -342,14 +415,6 @@ class Camera{
   }
 }
 
-const characterColor = "lightblue";
-const infectedCharacterColor = "red"
-const houseColor = "pink";
-const immuneColor = "#FFFF00"
-
-// The possible adjacent moves
-const moves = [[-1, 0], [1, 0], [0, 1], [0, -1]]
-
 // Any object that exists in the world
 class Entity{
   constructor(x, y, width, height, world){
@@ -361,8 +426,6 @@ class Entity{
   }
 }
 
-const liveOrDiePercentage = 0.005;
-const mortalityRate = 0.1
 // Each person
 class Character extends Entity{
   constructor(x, y, world){
@@ -376,7 +439,7 @@ class Character extends Entity{
     this.infectedColor = infectedCharacterColor;
     this.immuneColor = immuneColor
 
-    this.infected = Math.random() < 0.2;
+    this.infected = Math.random() < startingInfectedChance;
 
     this.resultPercentage = liveOrDiePercentage
     this.deathChance = mortalityRate
@@ -399,6 +462,7 @@ class Character extends Entity{
       if(Math.random() < this.resultPercentage){
         if(Math.random() < this.deathChance){
           this.world.characterDied(this)
+          world.deaths++;
         }else{
           this.immune = true
           this.infected = false
@@ -547,9 +611,6 @@ class Building extends Entity{
   }
 }
 
-
-const residentSpawnChance = 0.2;
-const maxPeoplePerSpawn = 2;
 // People start the day in houses
 class House extends Building{
   constructor(x, y, width, height, world, residents){
@@ -558,6 +619,8 @@ class House extends Building{
     this.maxAtOnce = maxPeoplePerSpawn
     this.world = world
     this.color = houseColor;
+
+    this.maxInfectionPerFrame = maxInfection
 
     // All people who belong in this home
     this.inHome = []
@@ -569,12 +632,12 @@ class House extends Building{
   }
   removeCharacter(character){
     super.removeCharacter(character)
-    for(let i = 0; i < this.residentsInHome; ++i){
+    for(let i = 0; i < this.residentsInHome.length; ++i){
       if(this.residentsInHome[i] == character){
         this.residentsInHome.splice(i, 1)
       }
     }
-    for(let i = 0; i < this.inHome; ++i){
+    for(let i = 0; i < this.inHome.length; ++i){
       if(this.inHome[i] == character){
         this.inHome.splice(i, 1)
       }
@@ -582,12 +645,18 @@ class House extends Building{
   }
   tick(){
     let allPeople = this.residentsInHome.concat(this.characters)
+    let totalNewInfections = 0
+    outer:
     for(let person of allPeople){
       person.tick()
       if(person.infected){
         for(let other of allPeople){
           if(Math.random() < this.world.indoorInfectionRate){
             other.particlesIn()
+            ++totalNewInfections
+            if(totalNewInfections >= this.maxInfectionPerFrame){
+              break outer;
+            }
           }
         }
       }
@@ -622,19 +691,25 @@ class House extends Building{
   }
 }
 
-const shopColor = "blue"
 class Shop extends Building{
   constructor(x, y, width, height, world){
     super(x, y, width, height, world)
     this.color = shopColor
+    this.maxInfectedPerFrame = maxInfection
   }
   tick(){
+    let totalInfected = 0
+    outer:
     for(let person of this.characters){
       person.tick()
       if(person.infected){
         for(let other of this.characters){
           if(Math.random() < this.world.indoorInfectionRate){
             other.particlesIn()
+            ++totalInfected
+            if(totalInfected >= this.maxInfectedPerFrame){
+              break outer;
+            }
           }
         }
       }
@@ -696,6 +771,7 @@ function buildWorld(format, info){
     if(type == "H"){
       let [x, y, width, height, residents] = properties.map((val) => parseInt(val))
       toreturn.addHouse(new House(x, y, width, height, toreturn, residents))
+      initialPopulation += residents;
     }else if(type == "S"){
       let [x, y, width, height] = properties.map((val) => parseInt(val))
       toreturn.addShop(new Shop(x, y, width, height, toreturn))
