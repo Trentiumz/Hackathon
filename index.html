@@ -25,8 +25,8 @@
         </h1>  
         <div id="bodpara"
         <h3> 
-          Hello! Welcome to our COVID-19 Simulator, called Patient Ø. You can utilize sliders to change aspects including mask wearing, social distancing, vaccines/immune, etc. The code will input and reflect the changes, and will display the fact-based simulations. The light blue squares represent the general population. The simulations begins with 1 infected person who will be represented with a red square. Then as the virus spreads, more people (light blue squares) start to turn into red squares. However, if people receive immunity either through vaccinations or antibodies, then they turn into yellow squares. The green sections symbolize grass, but people can't walk on grass,and must stay on the pathways which are light brown. The blue rectangles are stores, and the light pink rectangles represent buildings in general. The people will walk around in the town, alternating between various tasks and visiting different buildings. The decisions you make on the sliders will impact the spread of the virus in the population. Good luck!
-        </h3>
+          Hello! Welcome to our COVID-19 Simulator, called Patient Ø. You can utilize sliders to change aspects including mask wearing, social distancing, vaccines/immunity, etc. The code will input and reflect the changes, and will display the fact-based simulations. The light blue circles represent the general population. At the start, you will be able to choose the world you would like to begin in. The simulation begins with 1 infected person who will be represented with a red square. Then as the virus spreads, more people (light blue circles) start to turn into red circles. However, if people receive immunity either through vaccinations or antibodies, then they turn into yellow circles. The green sections symbolize grass, but people can't walk on grass,and must stay on the pathways which are light brown. The blue rectangles are stores, and the light pink rectangles represent houses. The people will walk around in the town, alternating between various tasks and visiting different buildings. Furthermore, you can move across the map of the town within the window, by clicking and moving your cursor. The decisions you make on the sliders will impact the spread of the virus in the population. Good luck!
+        </h3><br>
         <button id="backButton">Back</button>
       </div>
     </div>
@@ -36,6 +36,12 @@
 
     <div id="bottomBar">
       <a href="https://github.com/Trentiumz/Hackathon">GitHub</a>
+    </div>
+    <div id="worldChoiceScreen" hidden>
+      <button id="choiceNeighbourhoodButton" class="worldChoiceButton">Neighbourhood</button><br>
+      <button id="choiceSuburbsButton" class="worldChoiceButton">Suburbs</button><br>
+      <button id="choiceDowntownButton" class="worldChoiceButton">Downtown</button><br>
+      <button id="choiceManhattanButton" class="worldChoiceButton">Manhattan</button>
     </div>
     <div id="gameContainer" hidden>
       <div id="stats">

@@ -235,3 +235,42 @@ h1 {
   border-radius: 50px;
   background-color: lightblue;
 }
+
+#worldChoiceScreen{
+  position: fixed;
+  margin: auto;
+  width: 500px;
+  height: 500px;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+
+  background-color: aqua;
+  border-radius: 75px;
+  border-width: thick;
+  border-color: blue;
+  border-style: solid;
+  transition-duration: 0.5s;
+}
+
+.worldChoiceButton{
+  background-color: pink;
+  border-color: black;
+  border-width: medium;
+  border-radius: 100px;
+  padding: 30px;
+  margin: 20px;
+  width: 150px;
+  height: 75px;
+
+  vertical-align: middle;
+  transition-duration: 0.4s;
+}
+
+.worldChoiceButton:hover{
+  background-color: palevioletred;
+
+  vertical-align: middle;
+  transition-duration: 0.4s;
+}
